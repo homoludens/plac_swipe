@@ -1,6 +1,7 @@
 
 RUNINNG
 make `.env` in the same folder as this README.md, file with:
+
     OPENAI_API_KEY= "XXXXXXXXXXX"
     GROQ_API_KEY = "XXXXXXXXXXX"
     FB_USERNAME = "XXXXXXXXXXX"
