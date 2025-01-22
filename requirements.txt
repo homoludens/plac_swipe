@@ -1,0 +1,13 @@
+openai
+groq
+sqlalchemy
+panadas
+selenium
+bs4
+lxml
+flask
+flask_sqlalchemy
+flask_bootstrap
+flask_wtf
+geopandas
+python-dotenv

@@ -1,0 +1,90 @@
+{% extends 'layout.html' %}
+{% from 'bootstrap5/form.html' import render_form %}
+
+
+{% block body %}
+
+
+  <div class="container-fluid">
+
+  
+  
+  <div class="row">
+    <div class="col col-lg-2">
+      {{ render_form(form) }}
+    </div>
+  </div>
+
+  <h3 class='text-center text-muted mb-3'>Parcela Search</h3>
+  <table class='table table-bordered'>
+
+  <div class="container">
+    <div class="row">
+      {% set latitude = centroid[1] %}
+      {% set longitude = centroid[0] %}
+
+      <div id="map"></div>  
+
+      <script>
+        var map = L.map('map').setView(["{{latitude}}", "{{longitude}}"], 18);
+        var markersLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors'});
+        markersLayer.addTo(map);
+     </script>
+    
+      {% for row in datas %}
+        {% set latitude = row.centroid[1] %}
+        {% set longitude = row.centroid[0] %}
+        {% set geometry_list = row.geometry_list %}
+          <script>
+            L.marker(["{{latitude}}", "{{longitude}}"]).addTo(map).bindPopup('{{longitude}}<br>{{latitude}}');
+            L.polygon({{row.geometry_list}}).addTo(map);
+          </script>
+      {%endfor%}
+    </div>
+  </div>
+
+
+</div>
+
+<script>
+
+const element = document.querySelector('#ko_ime');
+const choices = new Choices(element);
+
+
+</script>
+
+{% endblock %}
+
+
+{% macro render_pagination(pagination, endpoint) %}
+  <div class=page-items>
+    {{ pagination.first }} - {{ pagination.last }} of {{ pagination.total }}
+  </div>
+
+  <ul class=pagination>
+    {% if pagination.has_prev %}
+        <li class="page-item"> <a class="page-link" href="{{ url_for(endpoint, page=pagination.prev_num) }}">Previous</a> </li>
+    {% endif %}
+
+    {% for page in pagination.iter_pages() %}
+
+      {% if page %}
+
+        {% if page != pagination.page %}
+          <li class="page-item"> <a class="page-link" href="{{ url_for(endpoint, page=page) }}">{{ page }}</a> </li>
+        {% else %}
+          <li class="page-item"> <a class="page-link" href="#"> <strong> {{ page }} </strong></a> </li>
+        {% endif %}
+      {% else %}
+        <li class="page-item"> <a class="page-link" href="#"><span class=ellipsis>…</span> </a></li>
+      {% endif %}
+    {% endfor %}
+    {% if pagination.has_next %}
+        <li class="page-item"> <a class="page-link" href="{{ url_for(endpoint, page=pagination.next_num) }}">Next</a> </li>
+    {% endif %}
+  </ul>
+{% endmacro %}
+
+
+

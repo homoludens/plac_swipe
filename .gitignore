@@ -4,3 +4,7 @@ venv
 .env
 *.sql
 __pycache__
+.vscode
+*.sqlite
+*.gz
+*.db

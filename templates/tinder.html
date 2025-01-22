@@ -1,0 +1,297 @@
+{% extends 'layout.html' %}
+{% from 'bootstrap5/form.html' import render_form %}
+
+{% block body %}
+
+  <h3 class='text-center text-muted mb-3'>Plac Tinder</h3>
+
+  <div class="container">
+    {% for row in datas %}
+
+      <div class="row">
+        <div class="col-lg-3 themed-grid-col">
+          ID: {{row.id}}
+        </div>
+        <div class="col-lg-3 themed-grid-col">
+          Ads link: <a href="{{row.ad_link}}">{{row.ad_link}}</a>
+        </div>
+        <div class="col-lg-3 themed-grid-col">
+          User link: <a href="{{row.ad_user_page}}">{{row.ad_user_page}}</a>
+        </div>
+        <div class="col-lg-3 themed-grid-col">
+          Date: {{row.date}}
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col themed-grid-col center">
+          <div>{{row.llm_village}}</div>
+          <div>{{row.llm_gps_coordinates}}</div>
+          <div>{{row.llm_driving_distance}}</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col themed-grid-col center">
+          <div id="map"></div>   
+          {% set gps_coordinates = row.llm_gps_coordinates.split(',') %}
+          {% set latitude = gps_coordinates[0] %}
+          {% set longitude = gps_coordinates[1] %}
+
+          <script>
+            var map = L.map('map').setView(["{{latitude}}", "{{longitude}}"], 12);
+            var markersLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors'});
+            markersLayer.addTo(map);
+
+            L.marker(["{{latitude}}", "{{longitude}}"]).addTo(map).bindPopup('{{row.llm_village}}<br>{{row.llm_driving_distance}}');
+
+
+            let geoCoderOptions = {
+              collapsed: false,
+              geocoder: L.Control.Geocoder.nominatim({
+                    geocodingQueryParams: {
+                      // List the country codes here
+                      countrycodes: 'rs'
+                    }
+                })
+            }
+
+            L.Control.geocoder(geoCoderOptions).addTo(map);
+
+          </script>
+        </div>
+         
+
+      </div>
+
+      <div class="row" id="yes-no-buttons">
+        <div class="col themed-grid-col">
+          <div class="form-check">
+              <input type="radio" class="btn-check" name="options-outlined-top" id="danger-outlined-top" value="no-{{row.id}}" autocomplete="off"  {{ "checked" if row.favourite < 0 }} >
+              <label class="btn btn-outline-danger" for="danger-outlined-top">No</label>
+          </div>
+        </div>
+        <div class="col themed-grid-col">
+          <div class="form-check">
+              <input type="radio" class="btn-check" name="options-outlined-top" id="success-outlined-top" value="yes-{{row.id}}" autocomplete="off"  {{ "checked" if row.favourite > 0 }} >
+              <label class="btn btn-outline-success" for="success-outlined-top">Yes</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col themed-grid-col center">
+          <h3>{{row.ad_full_title}}</h3>
+          <div>Cena: <strong>{{row.ad_full_price}}</strong></div>
+          <div><p>{{row.ad_full_description}}</p></div>
+        </div>
+      </div>
+
+
+
+      <div class="row">
+        <div class="col themed-grid-col">
+
+          <div class="row justify-content-center">
+            <div class="col">
+                
+                    {% set images = row.ad_full_image.replace('[', '').replace(']', '').replace("'", "").split(',') %}
+                    {% for image in images %}
+                    <div class="row">
+                      <a href="{{ image }}" data-toggle="lightbox" data-gallery="example-gallery" class="p-3 col">
+                        <img src="{{ image }}" class="img-fluid">
+                      </a>
+                    </div>
+                    {% endfor %}
+            </div>
+
+        </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col themed-grid-col">
+          <div class="form-check">
+              <input type="radio" class="btn-check" name="options-outlined" id="danger-outlined" value="no-{{row.id}}" autocomplete="off"  {{ "checked" if row.favourite < 0 }} >
+              <label class="btn btn-outline-danger" for="danger-outlined">No</label>
+          </div>
+        </div>
+        <div class="col themed-grid-col">
+          <div class="form-check">
+              <input type="radio" class="btn-check" name="options-outlined" id="success-outlined" value="yes-{{row.id}}" autocomplete="off"  {{ "checked" if row.favourite > 0 }} >
+              <label class="btn btn-outline-success" for="success-outlined">Yes</label> 
+          </div>
+        </div>
+      </div>
+    {%endfor%}
+
+    <div class="row">
+      <div class="col justify-content-center">
+          {{ render_pagination(datas, 'tinder') }}
+      </div>
+    </div>
+
+  </div>
+
+
+  <div class="container">
+    <div class="row">
+      <div class="col">
+        <h3>Filter</h3>
+        {{ render_form(form) }}
+      </div>
+    </div>
+  </div>
+  
+  <script>
+
+    const input = document.getElementsByClassName("btn-check");
+
+    for (let elem of input) {
+        // console.log(elem.id);
+        elem.addEventListener("change", updateValue);
+    }
+
+    function updateValue(e) {
+      // alert('opaaa')
+      console.log(e.target.checked)
+      console.log(e.target.id)
+
+      yes_no = e.target.value.split("-")[0]
+      if (yes_no=='yes') {
+        yes_no = 1
+      } else {
+        yes_no = -1
+      } 
+
+      target_id = e.target.value.split("-")[1]
+      // Your JSON data
+      const jsonData = { post_id: target_id, set_on_off: yes_no};
+      // Set up options for the fetch request
+      const options = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json', // Set content type to JSON
+          'X-CSRF-Token':  '{{csrf_token()}}'
+        },
+        body: JSON.stringify(jsonData) // Convert JSON data to a string and set it as the request body
+      };
+
+      // Make the fetch request with the provided options
+      rrr = fetch('/post/favourite', options)
+        .then(response => {
+          // Check if the request was successful
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          // Parse the response as JSON
+          const response_json = response.json();
+          console.log("response_json ", response_json);
+          return response_json 
+
+          // return response.json();
+        })
+        .then(data => {
+          // Handle the JSON data
+          console.log(data);
+        })
+        .catch(error => {
+          // Handle any errors that occurred during the fetch
+          console.error('Fetch error:', error);
+        });
+
+        console.log(rrr)
+
+        
+
+        const promise2 = rrr.then(function (result) {
+                                      const fav = JSON.parse(options.body).set_on_off 
+                                      if (fav == 1) {
+                                        console.log("NEXT PAGE");
+                                        next_page.click();
+                                      }
+
+                                      if (fav == -1) {
+                                        console.log("RELOAD PAGE");
+                                        window.location.reload();
+                                      }
+                                  }, 
+                                  
+                                    function (result) {
+                                      console.log("NEXT PAGE ERROR");
+                                      console.log(result)
+                                    }
+                                  );
+
+        
+    }
+
+
+    const next_page = document.getElementById('next-page');
+    function next_page_onclick(e){
+      console.log('you clicked the Yes button');
+
+      setTimeout(function(){
+          console.log("THIS IS");
+          next_page.click();
+      }, 2000);
+
+      
+    }
+
+    function reload_page(e){
+      // e.preventDefault();
+      console.log('you clicked the No button');
+
+      setTimeout(function(){
+          console.log("THIS IS");
+          window.location.reload();
+      }, 2000);
+
+      // window.location.reload();
+    }
+
+  </script>
+{% endblock %}
+
+
+{% macro render_pagination(pagination, endpoint) %}
+<div class="row">
+  <div class="col justify-content-center">
+      {{ pagination.first }} - {{ pagination.last }} of {{ pagination.total }}
+  </div>
+</div>
+
+<div class="row">
+  <div class="col justify-content-center">
+  <ul class=pagination>
+    {% if pagination.has_prev %}
+        <li class="page-item"> <a class="page-link" href="{{ url_for(endpoint, page=pagination.prev_num, maximum_price=maximum_price) }}">Prev</a> </li>
+    {% endif %}
+
+    {% for page in pagination.iter_pages(left_edge=1, left_current=0, right_current=0, right_edge=1) %}
+
+      {% if page %}
+          {% if page != pagination.page %}
+            <li class="page-item"> <a class="page-link" href="{{ url_for(endpoint, page=page, maximum_price=maximum_price) }}">{{ page }}</a> </li>
+          {% else %}
+            <li class="page-item"> <a class="page-link" href="#"> <strong> {{ page }} </strong></a> </li>
+          {% endif %}
+          {% else %}
+            <li class="page-item"> <a class="page-link" href="#"><span class=ellipsis>…</span> </a></li>
+
+        {% endif %}
+      {% endfor %}
+      
+    {% if pagination.has_next %}
+        <li class="page-item"> <a class="page-link" id="next-page" href="{{ url_for(endpoint, page=pagination.next_num, maximum_price=maximum_price) }}">Next</a> </li>
+    {% endif %}
+  </ul>
+</div>
+</div>  
+{% endmacro %}
+
+url_for('url_view_name', sort='name')
+
+
+
